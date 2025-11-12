@@ -1,0 +1,123 @@
+# ============================================
+# ANDROID / KOTLIN / GRADLE .gitignore
+# ============================================
+
+# --- Gradle ---
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+!**/src/androidTest/**/build/
+
+# --- Local configuration ---
+local.properties
+*.iml
+.idea/
+*.ipr
+*.iws
+.DS_Store
+*.swp
+*.lock
+*.log
+*.tmp
+*.bak
+
+# --- Android Studio specific ---
+.idea/caches
+.idea/libraries
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/tasks.xml
+.idea/vcs.xml
+.idea/misc.xml
+
+# --- Gradle wrapper properties ---
+gradle-app.setting
+gradlew
+gradlew.bat
+
+# --- Generated files ---
+captures/
+output.json
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+*.jar
+*.war
+*.ear
+*.db
+*.zip
+*.tar.gz
+*.orig
+*.rej
+
+# --- Android build folders ---
+*/build/
+*/intermediates/
+*/generated/
+*/outputs/
+*/tmp/
+
+# --- Keystore files (security) ---
+*.jks
+*.keystore
+*.pem
+*.p12
+*.key
+*.der
+
+# --- Firebase / Google Services ---
+google-services.json
+GoogleService-Info.plist
+
+# --- Kotlin ---
+*.kotlin_module
+
+# --- NDK / CMake ---
+.externalNativeBuild/
+.cxx/
+obj/
+
+# --- Misc ---
+*.so
+*.hprof
+.idea/deploymentTargetDropDown.xml
+.idea/deploymentTargetSelector.xml
+.idea/deploymentConfigurations.xml
+.idea/runConfigurations.xml
+.idea/gradle.xml
+.idea/navEditor.xml
+.idea/other.xml
+
+# --- Jetpack Compose previews cache ---
+.idea/composePreview/
+.idea/compose-designer/
+
+# --- Android Studio local history ---
+.idea/shelf/
+.idea/localHistory/
+
+# --- OS files ---
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# --- VSCode support (if you opened project there) ---
+.vscode/
+
+# --- Kotlin Symbol Processing (KSP) ---
+.ksp/
+
+# --- Testing ---
+test-output/
+androidTest-results/
+unitTest-results/
+
+# --- Misc Gradle caches ---
+.gradle/
+build/
