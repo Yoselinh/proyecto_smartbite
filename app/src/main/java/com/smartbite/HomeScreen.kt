@@ -1,169 +1,337 @@
 package com.smartbite
 
-import android.annotation.SuppressLint
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import java.util.Calendar
+import androidx.navigation.NavHostController
+import com.smartbite.viewmodel.LecturaViewModel
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import android.content.Context
+
+// Paleta solicitada
+private val Peach = Color(0xFFFFD8B5)
+private val OrangePastel = Color(0xFFFFB980)
+private val BeigeLight = Color(0xFFFFF5E8)
+private val SoftGray = Color(0xFF6D6D6D)
+private val SoftPurple = Color(0xFFD7C4FF)
+private val SoftRed = Color(0xFFFFA49A)
+private val SoftGreen = Color(0xFF9ED8A6)
 
 @OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun HomeScreen(navController: NavController) {
-    // Valores de ejemplo para las barras (más tarde vendrán del ViewModel)
-    val pesoValue = remember { 180f }     // ejemplo: gramos
-    val caloriasValue = remember { 320f } // ejemplo: kcal
-    val tempValue = remember { 36.5f }    // ejemplo: °C
+fun HomeScreen(navController: NavHostController, lecturaViewModel: LecturaViewModel) {
 
-    // Rangos para normalizar las barras (ajusta según tus datos reales)
-    val maxPeso = 300f
-    val maxCalorias = 1000f
-    val maxTemp = 42f
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
-    val pesoFraction = (pesoValue / maxPeso).coerceIn(0f, 1f)
-    val caloriasFraction = (caloriasValue / maxCalorias).coerceIn(0f, 1f)
-    val tempFraction = (tempValue / maxTemp).coerceIn(0f, 1f)
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("smartbite_prefs", Context.MODE_PRIVATE)
 
-    // Año actual compatible con Android
-    val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+    var metaProte by remember { mutableStateOf(prefs.getInt("meta_prote", 1000)) }
+    var metaCarbo by remember { mutableStateOf(prefs.getInt("meta_carbo", 1800)) }
+    var metaVegetal by remember { mutableStateOf(prefs.getInt("meta_vegetal", 500)) }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
+    LaunchedEffect(navController) {
+        navController.currentBackStackEntryFlow.collect { entry ->
+            if (entry.destination.route == "home") {
+                metaProte = prefs.getInt("meta_prote", 1000)
+                metaCarbo = prefs.getInt("meta_carbo", 1800)
+                metaVegetal = prefs.getInt("meta_vegetal", 500)
+            }
+        }
+    }
+
+    // Observa el StateFlow de lecturas
+    val lecturas by lecturaViewModel.misLecturas.collectAsState()
+
+    // Obtiene resumen del día desde el ViewModel
+    val (proteinaHoy, carboHoy, vegetalHoy) = lecturaViewModel.obtenerResumenDeHoy()
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .background(OrangePastel),
+                drawerContainerColor = OrangePastel
+            ) {
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+
+                    Image(
+                        painter = painterResource(id = R.drawable.avatar),
+                        contentDescription = "Perfil",
+                        modifier = Modifier
+                            .size(90.dp)
+                            .clip(CircleShape)
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
                     Text(
                         "SmartBite",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = Color.White
+                        color = SoftGray,
+                        style = MaterialTheme.typography.titleMedium
                     )
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color(0xFF6A5ACD),
-                    titleContentColor = Color.White
-                ),
-                actions = {
-                    IconButton(onClick = { navController.navigate("login") }) {
-                        Icon(
-                            imageVector = Icons.Filled.ExitToApp,
-                            contentDescription = "Cerrar sesión",
-                            tint = Color.White
+                }
+
+                Divider(color = Color.White.copy(alpha = 0.3f))
+
+                DrawerItem("Perfil") {
+                    navController.navigate("perfil")
+                    scope.launch { drawerState.close() }
+                }
+
+                DrawerItem("Mis lecturas registradas") {
+                    navController.navigate("lecturas")
+                    scope.launch { drawerState.close() }
+                }
+
+                DrawerItem("Cerrar sesión") {
+                    navController.navigate("login") {
+                        popUpTo(0)
+                    }
+                }
+            }
+        }
+    ) {
+
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("SmartBite", color = SoftGray) },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Peach)
+                )
+            },
+            containerColor = BeigeLight
+        ) { padding ->
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp)
+            ) {
+
+                // -------------------- TITULO --------------------
+                Text(
+                    "Bienvenido 👋",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = SoftGray
+                )
+                Text(
+                    "Aquí tienes tu resumen nutricional de hoy",
+                    color = SoftGray.copy(alpha = 0.7f)
+                )
+
+                Spacer(Modifier.height(20.dp))
+
+                // -------------------- TARJETAS DEL DÍA --------------------
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+
+                    NutrientCard(
+                        titulo = "Proteínas",
+                        valor = proteinaHoy,
+                        color = SoftGreen
+                    )
+
+                    NutrientCard(
+                        titulo = "Carbohidratos",
+                        valor = carboHoy,
+                        color = SoftPurple
+                    )
+
+                    NutrientCard(
+                        titulo = "Vegetales",
+                        valor = vegetalHoy,
+                        color = OrangePastel
+                    )
+                }
+
+                Spacer(Modifier.height(20.dp))
+
+                // -------------------- OBJETIVOS  --------------------
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = SoftGreen.copy(alpha = 0.4f)),
+                    shape = RoundedCornerShape(18.dp)
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+
+                        Text(
+                            "Objetivos ",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = SoftGray
+                        )
+
+                        Spacer(Modifier.height(12.dp))
+
+                        WeeklyGoalRow("Proteínas", proteinaHoy.toInt(), metaProte)
+                        WeeklyGoalRow("Carbohidratos", carboHoy.toInt(), metaCarbo)
+                        WeeklyGoalRow("Vegetales", vegetalHoy.toInt(), metaVegetal)
+                    }
+                }
+
+
+                Spacer(Modifier.height(20.dp))
+
+                // -------------------- ÚLTIMAS LECTURAS --------------------
+                Text(
+                    "Tus últimas lecturas",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = SoftGray
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                lecturas.takeLast(3).reversed().forEach { lectura ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        colors = CardDefaults.cardColors(containerColor = SoftPurple.copy(alpha = 0.2f)),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+
+                            Text("🍗 Proteína: ${lectura.nombreProteina} (${lectura.pesoProteina} g)")
+                            Text("🍞 Carbohidrato: ${lectura.nombreCarbohidrato} (${lectura.pesoCarbohidrato} g)")
+                            Text("🥬 Vegetal: ${lectura.nombreVegetal} (${lectura.pesoVegetal} g)")
+
+                            Spacer(Modifier.height(6.dp))
+                            Divider()
+                            Text("📅 ${lectura.fechaHora}", color = SoftGray)
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(20.dp))
+
+                // -------------------- TIPS NUTRICIONALES --------------------
+                Text(
+                    "Tips nutricionales",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = SoftGray
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = OrangePastel.copy(alpha = 0.3f)),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+
+                        Text(
+                            "🥦 Incluye siempre vegetales verdes en tu plato.",
+                            color = SoftGray
+                        )
+                        Spacer(Modifier.height(8.dp))
+
+                        Text(
+                            "🍗 Prefiere proteínas magras como pollo o pescado.",
+                            color = SoftGray
+                        )
+                        Spacer(Modifier.height(8.dp))
+
+                        Text(
+                            "💧 Toma al menos 6 vasos de agua al día.",
+                            color = SoftGray
                         )
                     }
                 }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .background(Color(0xFFF6F4FB))
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "¡Bienvenido a SmartBite! 👋",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF4A148C)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("Monitorea tus sensores y controla tus porciones", color = Color.Gray)
             }
-
-            // Tarjeta con "gráfico" sencillo hecho con Boxes (sin librerías externas)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(6.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Lecturas de sensores", fontWeight = FontWeight.Bold, color = Color(0xFF4A148C))
-
-                    SensorBarRow(label = "Peso (g)", fraction = pesoFraction, display = "${pesoValue.toInt()} g", barColor = Color(0xFF81C784))
-                    SensorBarRow(label = "Calorías", fraction = caloriasFraction, display = "${caloriasValue.toInt()} kcal", barColor = Color(0xFFFFB74D))
-                }
-            }
-
-            // Botones principales
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Button(
-                    onClick = { navController.navigate("perfil") },
-                    modifier = Modifier.fillMaxWidth(0.85f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6A5ACD))
-                ) {
-                    Icon(Icons.Filled.Person, contentDescription = null, tint = Color.White)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Ver / Editar Perfil", color = Color.White)
-                }
-
-                OutlinedButton(
-                    onClick = { navController.navigate("lectura") },
-                    modifier = Modifier.fillMaxWidth(0.85f)
-                ) {
-                    Text("Ver Lecturas de Sensores")
-                }
-
-                OutlinedButton(
-                    onClick = { navController.navigate("login") },
-                    modifier = Modifier.fillMaxWidth(0.85f),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red)
-                ) {
-                    Text("Cerrar sesión", color = Color.Red)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("SmartBite © $currentYear", color = Color.Gray, fontSize = 12.sp)
         }
     }
 }
 
 @Composable
-fun SensorBarRow(label: String, fraction: Float, display: String, barColor: Color) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label)
-            Text(display, fontWeight = FontWeight.Bold)
-        }
-        Spacer(modifier = Modifier.height(6.dp))
-        // Fondo de la barra
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(22.dp)
-                .background(Color(0xFFECEFF1), shape = RoundedCornerShape(12.dp))
+fun NutrientCard(titulo: String, valor: Double, color: Color) {
+    Card(
+        modifier = Modifier
+            .width(110.dp)
+            .height(130.dp),
+        colors = CardDefaults.cardColors(containerColor = color),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Barra llena proporcional
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(fraction)
-                    .background(barColor, shape = RoundedCornerShape(12.dp))
+            Text(titulo, color = SoftGray)
+            Spacer(Modifier.height(10.dp))
+            Text(
+                "${valor.toInt()} g",
+                style = MaterialTheme.typography.headlineSmall,
+                color = SoftGray
             )
         }
+    }
+}
+
+@Composable
+fun DrawerItem(texto: String, onClick: () -> Unit) {
+    NavigationDrawerItem(
+        label = { Text(texto, color = Color.White) },
+        selected = false,
+        onClick = onClick,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+    )
+}
+
+@Composable
+fun WeeklyGoalRow(nombre: String, valorActual: Int, meta: Int) {
+    val progreso = (valorActual.toFloat() / meta).coerceIn(0f, 1f)
+
+    Column(Modifier.fillMaxWidth()) {
+        Text("$nombre: $valorActual / $meta g", color = SoftGray)
+        Spacer(Modifier.height(6.dp))
+
+        LinearProgressIndicator(
+            progress = progreso,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(50)),
+            color = SoftGray,
+            trackColor = Color.White.copy(alpha = 0.4f)
+        )
+
+        Spacer(Modifier.height(12.dp))
     }
 }

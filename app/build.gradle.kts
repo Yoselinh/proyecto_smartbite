@@ -18,6 +18,18 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    buildFeatures {
+        compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.0"
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -27,6 +39,8 @@ android {
             )
         }
     }
+
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -34,8 +48,17 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+
     buildFeatures {
         compose = true
+    }
+
+    // SOLUCIÓN AL ERROR DE NETTY
+    packaging {
+        resources {
+            excludes += "META-INF/INDEX.LIST"
+            excludes += "META-INF/io.netty.versions.properties"
+        }
     }
 }
 
@@ -61,31 +84,41 @@ dependencies {
 
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
-
-// Converter (para JSON)
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-
-// Para llamadas asíncronas (opcional pero recomendable)
     implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
 
-    // Soporte para AppCompat (necesario para AppCompatActivity)
+    // AppCompat
     implementation("androidx.appcompat:appcompat:1.7.0")
-
-// Material Design clásico
     implementation("com.google.android.material:material:1.12.0")
-
-// Layout tradicional (opcional pero útil)
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
-// ViewModel y LiveData (para tu ViewModel)
+    // ViewModel & LiveData
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.4")
 
-// Activity KTX (necesario para viewModels())
+    // Activity KTX
     implementation("androidx.activity:activity-ktx:1.9.2")
+
+    // Compose LiveData support
     implementation("androidx.compose.runtime:runtime-livedata:1.7.0")
-    implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.compose.material:material-icons-extended:1.5.0")
+
+    // Icons
     implementation("androidx.compose.material:material-icons-extended:1.7.0")
+
+    // MQTT CLIENTS
+    implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
+    implementation("com.github.hannesa2:paho.mqtt.android:3.3.5")
+
+    // HiveMQ Client (el que tú usas)
+    implementation("com.hivemq:hivemq-mqtt-client:1.3.0")
+
+    // For AppWidgets support
+    implementation ("androidx.glance:glance-appwidget:1.1.0")
+
+// For interop APIs with Material 3
+    implementation ("androidx.glance:glance-material3:1.1.0")
+
+// For interop APIs with Material 2
+    implementation ("androidx.glance:glance-material:1.1.0")
 
 }

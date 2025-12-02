@@ -1,8 +1,11 @@
 package com.smartbite.model
 
 data class LecturaRequest(
-    val peso_carbohidrato: Float,
-    val peso_proteina: Float,
-    val peso_vegetal: Float,
-    val usuario_id: Int
+    val nombreProteina: String,
+    val pesoProteina: Double,
+    val nombreCarbohidrato: String,
+    val pesoCarbohidrato: Double,
+    val nombreVegetal: String,
+    val pesoVegetal: Double,
+    val usuarioId: Long
 )

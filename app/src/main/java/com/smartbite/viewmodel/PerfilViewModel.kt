@@ -6,8 +6,15 @@ import androidx.lifecycle.viewModelScope
 import com.smartbite.model.PerfilUsuario
 import com.smartbite.repository.PerfilRepository
 import kotlinx.coroutines.launch
-
+import android.content.Context
 class PerfilViewModel : ViewModel() {
+
+    // METAS DIARIAS
+    val metaProteinaLiveData = MutableLiveData<Int>()
+    val metaCarboLiveData = MutableLiveData<Int>()
+    val metaVegetalLiveData = MutableLiveData<Int>()
+
+    val objetivoLiveData = MutableLiveData<String>() // subir / bajar / mantener
 
     private val repository = PerfilRepository()
 
@@ -15,15 +22,17 @@ class PerfilViewModel : ViewModel() {
     val cargandoLiveData = MutableLiveData<Boolean>()
     val errorLiveData = MutableLiveData<String?>()
 
-    /**
-     * Obtiene el perfil del usuario desde el servidor usando el token.
-     */
+
+    // =====================================================
+    // OBTENER PERFIL DEL SERVIDOR
+    // =====================================================
     fun obtenerPerfil(token: String) {
         cargandoLiveData.postValue(true)
         viewModelScope.launch {
             try {
                 val perfil = repository.obtenerPerfil(token)
                 perfilLiveData.postValue(perfil)
+
             } catch (e: Exception) {
                 errorLiveData.postValue("Error al obtener perfil: ${e.message}")
             } finally {
@@ -32,21 +41,23 @@ class PerfilViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Actualiza el perfil en el servidor y luego refresca los datos.
-     */
+
+    // =====================================================
+    // ACTUALIZAR PERFIL
+    // =====================================================
     fun actualizarPerfil(token: String, perfil: PerfilUsuario) {
         cargandoLiveData.postValue(true)
         viewModelScope.launch {
             try {
                 val exito = repository.actualizarPerfil(token, perfil)
+
                 if (exito) {
-                    // Vuelve a obtener el perfil actualizado desde el servidor
-                    val perfilActualizado = repository.obtenerPerfil(token)
-                    perfilLiveData.postValue(perfilActualizado)
+                    val actualizado = repository.obtenerPerfil(token)
+                    perfilLiveData.postValue(actualizado)
                 } else {
                     errorLiveData.postValue("No se pudo actualizar el perfil.")
                 }
+
             } catch (e: Exception) {
                 errorLiveData.postValue("Error al actualizar perfil: ${e.message}")
             } finally {
@@ -54,4 +65,59 @@ class PerfilViewModel : ViewModel() {
             }
         }
     }
+
+
+    // =====================================================
+    // NUEVO: CALCULAR METAS SEGÚN PESO + OBJETIVO
+    // =====================================================
+    fun calcularMetasDiarias(peso: Float, objetivo: String): Triple<Int, Int, Int> {
+        return when (objetivo) {
+
+            "subir" -> {
+                val prote = (2.0 * peso).toInt()
+                val carbo = (4.0 * peso).toInt()
+                val vegetal = 80
+                Triple(prote, carbo, vegetal)
+            }
+
+            "bajar" -> {
+                val prote = (1.8 * peso).toInt()
+                val carbo = (2.2 * peso).toInt()
+                val vegetal = 130
+                Triple(prote, carbo, vegetal)
+            }
+
+            "mantener" -> {
+                val prote = (1.6 * peso).toInt()
+                val carbo = (3.0 * peso).toInt()
+                val vegetal = 100
+                Triple(prote, carbo, vegetal)
+            }
+
+            else -> Triple(150, 250, 80)
+        }
+    }
+    fun calcularMetasYAplicarlas(peso: Float?, context: Context) {
+        if (peso == null) return
+
+        val objetivo = objetivoLiveData.value ?: "mantener"
+        val (p, c, v) = calcularMetasDiarias(peso, objetivo)
+
+        metaProteinaLiveData.postValue(p)
+        metaCarboLiveData.postValue(c)
+        metaVegetalLiveData.postValue(v)
+
+        guardarMetasEnPrefs(context, p, c, v)
+    }
+
+    fun guardarMetasEnPrefs(context: Context, p: Int, c: Int, v: Int) {
+        val prefs = context.getSharedPreferences("smartbite_prefs", Context.MODE_PRIVATE)
+        prefs.edit()
+            .putInt("meta_prote", p)
+            .putInt("meta_carbo", c)
+            .putInt("meta_vegetal", v)
+            .apply()
+    }
+
 }
+

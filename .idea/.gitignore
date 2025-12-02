@@ -91,7 +91,6 @@ obj/
 .idea/deploymentConfigurations.xml
 .idea/runConfigurations.xml
 .idea/gradle.xml
-.idea/navEditor.xml
 .idea/other.xml
 
 # --- Jetpack Compose previews cache ---
@@ -121,3 +120,8 @@ unitTest-results/
 # --- Misc Gradle caches ---
 .gradle/
 build/
+
+# Archivos de error de JVM
+hs_err_pid*.log
+replay_pid*.log
+*.log

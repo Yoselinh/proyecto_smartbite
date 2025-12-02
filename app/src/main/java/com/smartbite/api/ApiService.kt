@@ -1,10 +1,10 @@
 package com.smartbite.api
 
 import com.smartbite.model.*
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*
-import com.smartbite.model.PerfilResponse
-import okhttp3.ResponseBody
+
 interface ApiService {
 
     // ---------- AUTH ----------
@@ -15,9 +15,10 @@ interface ApiService {
     suspend fun registrar(@Body request: RegistroRequest): Response<LoginResponse>
 
     // ---------- PERFIL ----------
-
     @GET("api/profile")
-    suspend fun obtenerPerfil(@Header("Authorization") token: String): Response<PerfilResponse>
+    suspend fun obtenerPerfil(
+        @Header("Authorization") token: String
+    ): Response<PerfilResponse>
 
     @PUT("api/profile")
     suspend fun actualizarPerfil(
@@ -26,16 +27,31 @@ interface ApiService {
     ): Response<ResponseBody>
 
 
+    // ---------- SENSORES ----------
+    /** OBTENER TODAS LAS LECTURAS (sin auth obligatoria) */
     @GET("api/sensores/todas")
     suspend fun listarLecturas(): Response<List<LecturaSensor>>
 
-    /** Versión RAW del mismo endpoint, útil como fallback */
-    @GET("api/sensores/todas")
-    suspend fun listarLecturasRaw(): Response<ResponseBody>
+    /** OBTENER LECTURAS POR USUARIO */
+    @GET("api/sensores/usuario/{id}")
+    suspend fun getLecturasByUsuario(
+        @Path("id") usuarioId: Long
+    ): Response<List<LecturaSensor>>
 
-    /** Registra una nueva lectura */
+
+    /** OBTENER MIS LECTURAS (usuario autenticado) */
+    @GET("api/sensores/me")
+    suspend fun listarMisLecturas(
+        @Header("Authorization") token: String
+    ): Response<List<LecturaSensor>>
+
+
+    /** REGISTRAR UNA NUEVA LECTURA */
     @POST("api/sensores/registrar")
     suspend fun registrarLectura(
+        @Header("Authorization") token: String,
         @Body request: LecturaRequest
     ): Response<String>
+
+
 }

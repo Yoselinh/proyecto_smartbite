@@ -9,6 +9,8 @@ import com.smartbite.model.LoginResponse
 import com.smartbite.model.RegistroRequest
 import com.smartbite.repository.UsuarioRepository
 import kotlinx.coroutines.launch
+import com.smartbite.MqttAppService
+import android.content.Context
 
 class UsuarioViewModel : ViewModel() {
 
@@ -18,8 +20,11 @@ class UsuarioViewModel : ViewModel() {
     val errorLiveData = MutableLiveData<String?>()
     val cargandoLiveData = MutableLiveData<Boolean>()
 
+    var idUsuarioActual: Long = 0L
+    val _mensaje = MutableLiveData<String>()
+
     // ---------- LOGIN ----------
-    fun login(correo: String, password: String) {
+    fun login(correo: String, password: String, context: Context) {
         if (correo.isBlank() || password.isBlank()) {
             errorLiveData.postValue("Debe ingresar correo y password.")
             return
@@ -32,7 +37,19 @@ class UsuarioViewModel : ViewModel() {
                 val resultado = usuarioRepository.login(request)
 
                 if (resultado != null) {
+
+                    // GUARDAR TOKEN E ID
+                    val prefs = context.getSharedPreferences("smartbite_prefs", Context.MODE_PRIVATE)
+                    prefs.edit()
+                        .putString("auth_token", resultado.token)
+                        .putLong("user_id", resultado.userId.toLong())
+                        .apply()
+
+                    idUsuarioActual = resultado.userId.toLong()
+
+
                     usuarioLiveData.postValue(resultado)
+
                 } else {
                     errorLiveData.postValue("Credenciales incorrectas.")
                 }
@@ -46,7 +63,7 @@ class UsuarioViewModel : ViewModel() {
     }
 
     // ---------- REGISTRO ----------
-    fun registrar(nombre: String, correo: String, password: String, rol: String = "USER") {
+    fun registrar(nombre: String, correo: String, password: String, context: Context, rol: String = "USER") {
         if (nombre.isBlank() || correo.isBlank() || password.isBlank()) {
             errorLiveData.postValue("Debe completar todos los campos.")
             return
@@ -59,9 +76,21 @@ class UsuarioViewModel : ViewModel() {
                 val resultado = usuarioRepository.registrar(request)
 
                 if (resultado != null) {
+
+                    // GUARDAR TOKEN E ID
+                    val prefs = context.getSharedPreferences("smartbite_prefs", Context.MODE_PRIVATE)
+                    prefs.edit()
+                        .putString("auth_token", resultado.token)
+                        .putLong("user_id", resultado.userId.toLong())
+                        .apply()
+
+                    idUsuarioActual = resultado.userId.toLong()
+
+
                     usuarioLiveData.postValue(resultado)
+
                 } else {
-                    errorLiveData.postValue("Error al registrar usuario.")
+                    errorLiveData.postValue("No se pudo registrar usuario.")
                 }
 
             } catch (e: Exception) {

@@ -8,6 +8,7 @@ import kotlinx.coroutines.withContext
 
 class PerfilRepository {
     private val api = ApiClient.apiService
+
     suspend fun obtenerPerfil(token: String): PerfilUsuario? = withContext(Dispatchers.IO) {
         try {
             val response = api.obtenerPerfil("Bearer $token")

@@ -1,10 +1,14 @@
 package com.smartbite.model
 
+
 data class LecturaSensor(
-    val id: Int,
-    val fecha_hora: String,
-    val peso_carbohidrato: Float,
-    val peso_proteina: Float,
-    val peso_vegetal: Float,
-    val usuario_id: Int
+    val id: Long,
+    val usuarioId: Int,
+    val nombreProteina: String,
+    val pesoProteina: Double,
+    val nombreCarbohidrato: String,
+    val pesoCarbohidrato: Double,
+    val nombreVegetal: String,
+    val pesoVegetal: Double,
+    val fechaHora: String
 )
