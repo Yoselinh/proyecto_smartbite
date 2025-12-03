@@ -97,7 +97,7 @@ class PerfilViewModel : ViewModel() {
             else -> Triple(150, 250, 80)
         }
     }
-    fun calcularMetasYAplicarlas(peso: Float?, context: Context) {
+    fun calcularMetasYAplicarlas(peso: Float?, userId: Long, context: Context) {
         if (peso == null) return
 
         val objetivo = objetivoLiveData.value ?: "mantener"
@@ -107,17 +107,17 @@ class PerfilViewModel : ViewModel() {
         metaCarboLiveData.postValue(c)
         metaVegetalLiveData.postValue(v)
 
-        guardarMetasEnPrefs(context, p, c, v)
+        guardarMetasEnPrefs(context, userId, p, c, v)
     }
 
-    fun guardarMetasEnPrefs(context: Context, p: Int, c: Int, v: Int) {
+
+    fun guardarMetasEnPrefs(context: Context, userId: Long, p: Int, c: Int, v: Int) {
         val prefs = context.getSharedPreferences("smartbite_prefs", Context.MODE_PRIVATE)
         prefs.edit()
-            .putInt("meta_prote", p)
-            .putInt("meta_carbo", c)
-            .putInt("meta_vegetal", v)
+            .putInt("meta_prote_$userId", p)
+            .putInt("meta_carbo_$userId", c)
+            .putInt("meta_vegetal_$userId", v)
             .apply()
     }
-
 }
 

@@ -36,7 +36,7 @@ class PerfilRepository {
             if (response.isSuccessful) {
                 // Leer texto plano de respuesta ("Perfil actualizado")
                 val mensaje = response.body()?.string() ?: "Perfil actualizado"
-                println("✅ $mensaje")
+                println(" $mensaje")
                 true
             } else {
                 val error = response.errorBody()?.string()

@@ -63,9 +63,17 @@ fun HomeScreen(navController: NavHostController, lecturaViewModel: LecturaViewMo
 
     // Observa el StateFlow de lecturas
     val lecturas by lecturaViewModel.misLecturas.collectAsState()
+    LaunchedEffect(Unit) {
+        lecturaViewModel.cargarToken(context)
+        lecturaViewModel.cargarMisLecturas()
+    }
+
 
     // Obtiene resumen del día desde el ViewModel
-    val (proteinaHoy, carboHoy, vegetalHoy) = lecturaViewModel.obtenerResumenDeHoy()
+    val resumenHoy by remember {
+        derivedStateOf { lecturaViewModel.obtenerResumenDeHoy() }
+    }
+    val (proteinaHoy, carboHoy, vegetalHoy) = resumenHoy
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -218,7 +226,7 @@ fun HomeScreen(navController: NavHostController, lecturaViewModel: LecturaViewMo
 
                 Spacer(Modifier.height(12.dp))
 
-                lecturas.takeLast(3).reversed().forEach { lectura ->
+                lecturas.takeLast(6).reversed().forEach { lectura ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()

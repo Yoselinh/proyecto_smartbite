@@ -39,15 +39,13 @@ fun PerfilScreen(
     viewModel: PerfilViewModel = viewModel()
 ) {
 
-    val metaP by viewModel.metaProteinaLiveData.observeAsState()
-    val metaC by viewModel.metaCarboLiveData.observeAsState()
-    val metaV by viewModel.metaVegetalLiveData.observeAsState()
-
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("smartbite_prefs", Context.MODE_PRIVATE)
     val editor = prefs.edit()
 
     val token = prefs.getString("auth_token", null)
+    val userId = prefs.getLong("user_id", 0L) // ID del usuario actual
+
 
     val perfil by viewModel.perfilLiveData.observeAsState()
     val cargando by viewModel.cargandoLiveData.observeAsState(false)
@@ -59,8 +57,22 @@ fun PerfilScreen(
     var genero by remember { mutableStateOf("") }
     var modoEdicion by remember { mutableStateOf(false) }
 
-    val objetivoGuardado = prefs.getString("objetivo", "mantener") ?: "mantener"
+    // -----------------------------
+    // OBJETIVO DEL USUARIO
+    // -----------------------------
+    val objetivoGuardado = prefs.getString("objetivo_$userId", "mantener") ?: "mantener"
     val objetivo by viewModel.objetivoLiveData.observeAsState(objetivoGuardado)
+
+    // -----------------------------
+    // METAS GUARDADAS POR USUARIO
+    // -----------------------------
+    val metaProteGuardada = prefs.getInt("meta_prote_$userId", 1000)
+    val metaCarboGuardada = prefs.getInt("meta_carbo_$userId", 1800)
+    val metaVegetalGuardada = prefs.getInt("meta_vegetal_$userId", 500)
+
+    var metaPState by remember { mutableStateOf(metaProteGuardada) }
+    var metaCState by remember { mutableStateOf(metaCarboGuardada) }
+    var metaVState by remember { mutableStateOf(metaVegetalGuardada) }
 
     // Cargar perfil al abrir pantalla
     LaunchedEffect(token) {
@@ -105,7 +117,7 @@ fun PerfilScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 📌 Imagen
+            // Imagen
             Image(
                 painter = painterResource(id = R.drawable.avatar),
                 contentDescription = "Avatar",
@@ -209,14 +221,13 @@ fun PerfilScreen(
 
 
             // ---------------------------------------------------------
-            // ⭐ CARD DE OBJETIVO Y CÁLCULO DE METAS
+            //  CARD DE OBJETIVO Y CÁLCULO DE METAS
             // ---------------------------------------------------------
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-
                 Column(
                     modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.Start
@@ -231,13 +242,12 @@ fun PerfilScreen(
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Column {
-
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             RadioButton(
                                 selected = objetivo == "subir",
                                 onClick = {
                                     viewModel.objetivoLiveData.value = "subir"
-                                    editor.putString("objetivo", "subir").apply()
+                                    editor.putString("objetivo_$userId", "subir").apply()
                                 }
                             )
                             Text("Subir peso")
@@ -248,7 +258,7 @@ fun PerfilScreen(
                                 selected = objetivo == "bajar",
                                 onClick = {
                                     viewModel.objetivoLiveData.value = "bajar"
-                                    editor.putString("objetivo", "bajar").apply()
+                                    editor.putString("objetivo_$userId", "bajar").apply()
                                 }
                             )
                             Text("Bajar peso")
@@ -259,7 +269,7 @@ fun PerfilScreen(
                                 selected = objetivo == "mantener",
                                 onClick = {
                                     viewModel.objetivoLiveData.value = "mantener"
-                                    editor.putString("objetivo", "mantener").apply()
+                                    editor.putString("objetivo_$userId", "mantener").apply()
                                 }
                             )
                             Text("Mantener peso")
@@ -275,13 +285,20 @@ fun PerfilScreen(
                                 Toast.makeText(context, "Peso inválido", Toast.LENGTH_SHORT).show()
                                 return@Button
                             }
-                            viewModel.calcularMetasYAplicarlas(pesoFloat, context)
-                            Float
 
-                            // Guardar metas
-                            metaP?.let { editor.putInt("meta_prote", it) }
-                            metaC?.let { editor.putInt("meta_carbo", it) }
-                            metaV?.let { editor.putInt("meta_vegetal", it) }
+                            // Calcular metas según el objetivo actual
+                            viewModel.calcularMetasYAplicarlas(pesoFloat, userId, context)
+
+                            // Actualizar los estados locales con los LiveData recién calculados
+                            metaPState = viewModel.metaProteinaLiveData.value ?: 0
+                            metaCState = viewModel.metaCarboLiveData.value ?: 0
+                            metaVState = viewModel.metaVegetalLiveData.value ?: 0
+
+                            // Guardar metas en SharedPreferences
+                            editor.putInt("meta_prote_$userId", metaPState)
+                            editor.putInt("meta_carbo_$userId", metaCState)
+                            editor.putInt("meta_vegetal_$userId", metaVState)
+                            editor.putString("objetivo_$userId", viewModel.objetivoLiveData.value ?: "mantener")
                             editor.apply()
 
                             Toast.makeText(context, "Metas calculadas", Toast.LENGTH_SHORT).show()
